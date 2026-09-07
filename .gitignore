@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+venv/
+.buildozer/
+bin/
+controle_encomendas.db
+*.db
