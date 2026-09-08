@@ -279,103 +279,70 @@ class Login(Screen):
 
 class MenuLateral(BoxLayout):
 
-    def __init__(self, **kwargs):
-
+    def __init__(self, tela_base, **kwargs):
         super().__init__(
             orientation="vertical",
             size_hint_x=None,
-            width=dp(230),
-            padding=dp(12),
+            width=dp(280),
+            padding=dp(18),
             spacing=dp(8),
             **kwargs
         )
 
-        titulo = label(
-            "📦 MENU",
-            22,
-            True
-        )
+        self.tela_base = tela_base
 
+        titulo = label("📦  MENU", 22, True)
         self.add_widget(titulo)
 
         itens = [
-            ("🏠 Início", "inicio"),
-            ("👤 Moradores", "moradores"),
-            ("📦 Nova encomenda", "cadastro"),
-            ("🔎 Buscar", "busca"),
-            ("⏳ Pendentes", "pendentes"),
-            ("📋 Todas", "todas"),
-            ("🕘 Histórico", "historico"),
-            ("👥 Funcionários", "funcionarios"),
-            ("📊 Relatórios", "relatorio"),
+            ("🏠  Início", "inicio"),
+            ("👤  Moradores", "moradores"),
+            ("📦  Nova encomenda", "cadastro"),
+            ("🔎  Buscar", "busca"),
+            ("⏳  Pendentes", "pendentes"),
+            ("📋  Todas", "todas"),
+            ("🕘  Histórico", "historico"),
+            ("👥  Funcionários", "funcionarios"),
+            ("📊  Relatórios", "relatorio"),
         ]
 
-        for texto, tela in itens:
-
-            b = botao(texto, 45)
-            b.background_color = (
-                0.90,
-                0.93,
-                0.97,
-                1
-            )
-            b.color = (
-                0.10,
-                0.10,
-                0.10,
-                1
-            )
-
+        for texto_item, tela in itens:
+            b = botao(texto_item, 48)
+            b.background_color = (0.93, 0.95, 0.98, 1)
+            b.color = (0.10, 0.10, 0.10, 1)
             b.bind(
-                on_release=lambda btn, t=tela:
-                self.ir(t)
+                on_release=lambda btn, t=tela: self.ir(t)
             )
-
             self.add_widget(b)
 
         self.add_widget(Widget())
 
-        backup = botao("💾 Backup", 45)
-        backup.bind(
-            on_release=self.backup
-        )
+        backup = botao("💾  Backup", 48)
+        backup.bind(on_release=self.backup)
         self.add_widget(backup)
 
-        sair = botao("🚪 Sair", 45)
-        sair.background_color = (
-            0.80,
-            0.20,
-            0.20,
-            1
-        )
-        sair.bind(
-            on_release=self.sair
-        )
-
+        sair = botao("🚪  Sair", 48)
+        sair.background_color = (0.80, 0.20, 0.20, 1)
+        sair.bind(on_release=self.sair)
         self.add_widget(sair)
 
     def ir(self, tela):
-
         App.get_running_app().root.current = tela
+        self.tela_base.fechar_menu()
 
     def sair(self, *args):
-
+        self.tela_base.fechar_menu()
         App.get_running_app().root.current = "login"
 
     def backup(self, *args):
-
         try:
-
             nome = (
                 "backup_"
                 + datetime.now().strftime("%Y%m%d_%H%M%S")
                 + ".db"
             )
 
-            shutil.copy(
-                DB_NAME,
-                nome
-            )
+            shutil.copy(DB_NAME, nome)
 
             Popup(
                 title="Backup",
@@ -387,7 +354,6 @@ class MenuLateral(BoxLayout):
             ).open()
 
         except Exception as e:
-
             Popup(
                 title="Erro",
                 content=label(
@@ -406,12 +372,7 @@ class TelaBase(Screen):
 
     def montar(self, titulo):
 
-        principal = BoxLayout(
-            orientation="horizontal"
-        )
-
-        menu = MenuLateral()
-        principal.add_widget(menu)
+        raiz = FloatLayout()
 
         area = BoxLayout(
             orientation="vertical",
@@ -419,31 +380,71 @@ class TelaBase(Screen):
             spacing=dp(12)
         )
 
-        cabecalho = label(
-            titulo,
-            24,
-            True
+        cabecalho = BoxLayout(
+            orientation="horizontal",
+            size_hint_y=None,
+            height=dp(55),
+            spacing=dp(10)
         )
 
-        area.add_widget(
-            cabecalho
+        menu_btn = Button(
+            text="☰",
+            font_size=28,
+            size_hint_x=None,
+            width=dp(55),
+            background_normal="",
+            background_color=(0.93, 0.95, 0.98, 1),
+            color=(0.10, 0.10, 0.10, 1)
         )
+
+        cabecalho.add_widget(menu_btn)
+
+        cabecalho.add_widget(
+            label(titulo, 24, True)
+        )
+
+        area.add_widget(cabecalho)
 
         self.conteudo = BoxLayout(
             orientation="vertical",
             spacing=dp(10)
         )
 
-        area.add_widget(
-            self.conteudo
+        area.add_widget(self.conteudo)
+
+        raiz.add_widget(area)
+
+        self.menu = MenuLateral(self)
+
+        self.menu_container = FloatLayout(
+            size_hint=(None, 1),
+            width=0,
+            pos_hint={"x": 0, "top": 1}
         )
 
-        principal.add_widget(
-            area
+        self.menu_container.add_widget(self.menu)
+
+        menu_btn.bind(
+            on_release=self.alternar_menu
         )
 
-        self.add_widget(principal)
+        self.add_widget(raiz)
 
+    def alternar_menu(self, *args):
+        if self.menu_container.width == 0:
+            self.abrir_menu()
+        else:
+            self.fechar_menu()
+
+    def abrir_menu(self):
+        self.menu_container.width = dp(280)
+        self.menu.width = dp(280)
+
+        if self.menu_container.parent is None:
+            self.add_widget(self.menu_container)
+
+    def fechar_menu(self):
+        self.menu_container.width = 0
 
 # ============================================================
 # INÍCIO
